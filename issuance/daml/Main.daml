@@ -1,0 +1,102 @@
+module Main where
+
+import Daml.Script
+
+-- A teaching model for locally issued units. The issuer remains a signatory
+-- and can see holdings. The current holder can split and transfer units.
+template MockAsset
+  with
+    issuer : Party
+    owner : Party
+    symbol : Text
+    quantity : Decimal
+  where
+    signatory issuer
+    observer owner
+    ensure quantity > 0.0
+
+    choice Transfer : ContractId MockAsset
+      with
+        newOwner : Party
+      controller owner
+      do
+        create this with owner = newOwner
+
+    choice Split : (ContractId MockAsset, ContractId MockAsset)
+      with
+        splitQuantity : Decimal
+      controller owner
+      do
+        assertMsg "Split must leave two positive holdings"
+          (splitQuantity > 0.0 && splitQuantity < quantity)
+        first <- create this with quantity = splitQuantity
+        remainder <- create this with quantity = quantity - splitQuantity
+        pure (first, remainder)
+
+    choice Burn : ()
+      controller issuer
+      do
+        pure ()
+
+-- Leaves Alice holding 900 units and Bob holding 100 units.
+-- Can run in the IDE ledger with dpm test, or on sandbox with dpm script.
+demo : Script ()
+demo = script do
+  issuer <- allocateParty "DemoIssuer"
+  alice <- allocateParty "Alice"
+  bob <- allocateParty "Bob"
+
+  holding <- submit issuer do
+    createCmd MockAsset with
+      issuer
+      owner = alice
+      symbol = "DEMO-BOND"
+      quantity = 1000.0
+
+  submitMustFail bob do
+    exerciseCmd holding Transfer with newOwner = bob
+
+  (portion, remainder) <- submit alice do
+    exerciseCmd holding Split with splitQuantity = 100.0
+
+  transferred <- submit alice do
+    exerciseCmd portion Transfer with newOwner = bob
+
+  aliceHolding <- queryContractId alice remainder
+  bobHolding <- queryContractId bob transferred
+  assertMsg "Alice must hold 900 units"
+    (fmap (.quantity) aliceHolding == Some 900.0)
+  assertMsg "Bob must hold 100 units"
+    (fmap (.quantity) bobHolding == Some 100.0)
+  hiddenHolding <- queryContractId bob remainder
+  assertMsg "Bob must not see Alice's remainder" (hiddenHolding == None)
+
+  debug "PASS: issued 1000 DEMO-BOND units; Alice holds 900, Bob holds 100"
+  debug "PASS: unauthorized transfer rejected; Alice's remainder hidden from Bob"
+
+testInvalidIssuance : Script ()
+testInvalidIssuance = script do
+  issuer <- allocateParty "ValidationIssuer"
+  submitMustFail issuer do
+    createCmd MockAsset with
+      issuer
+      owner = issuer
+      symbol = "INVALID"
+      quantity = 0.0
+
+testBurn : Script ()
+testBurn = script do
+  issuer <- allocateParty "BurnIssuer"
+  owner <- allocateParty "BurnOwner"
+  holding <- submit issuer do
+    createCmd MockAsset with
+      issuer
+      owner
+      symbol = "BURN-DEMO"
+      quantity = 10.0
+  submitMustFail owner do
+    exerciseCmd holding Burn
+  submit issuer do
+    exerciseCmd holding Burn
+  remaining <- queryContractId issuer holding
+  assertMsg "Burned contract must be inactive" (remaining == None)
