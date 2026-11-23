@@ -78,6 +78,7 @@ if ($Prepare) {
     Invoke-Local $platform 'npm.cmd' @('run','build')
     $env:DPM_HOME = Join-Path $PSScriptRoot '.dpm'
     $env:DPM_REGISTRY = 'europe-docker.pkg.dev/da-images/public'
+    & (Join-Path $PSScriptRoot 'Run-CantonTokenStandard.ps1') -Prepare -BuildOnly
     Invoke-Local (Join-Path $platform 'model') (Join-Path $PSScriptRoot 'tools/dpm.exe') @('build')
 } else {
     & (Join-Path $PSScriptRoot 'Start-CantonLens.ps1')

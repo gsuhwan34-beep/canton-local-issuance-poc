@@ -3,7 +3,7 @@ import { ledgerClient } from './ledger-api.mjs';
 import { database } from './database.mjs';
 
 const ledger = await ledgerClient('participant_admin');
-const dar = await readFile(new URL('./model/.daml/dist/private-canton-issuance-1.0.0.dar', import.meta.url));
+const dar = await readFile(new URL('./model/.daml/dist/private-canton-issuance-1.1.0.dar', import.meta.url));
 const participants = [
   { username: 'issuer-demo', role: 'issuer', port: 5013, partyName: 'IssuingDesk', projection: 'pqs_issuer' },
   { username: 'approver-demo', role: 'approver', port: 5023, partyName: 'BrokerB', projection: 'pqs_broker' }

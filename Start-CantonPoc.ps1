@@ -36,7 +36,7 @@ try {
     & (Join-Path $PSScriptRoot 'Start-CantonPlatform.ps1') -Prepare:$Prepare
     & node.exe $check
     if ($LASTEXITCODE) { throw 'The local PoC did not pass its readiness checks.' }
-    & (Join-Path $PSScriptRoot 'Run-CantonTokenStandard.ps1') -Prepare:$Prepare -InstallOnly:(!$Demo)
+    if ($Demo) { & (Join-Path $PSScriptRoot 'Run-CantonTokenStandard.ps1') }
 } finally {
     if ($acquired) { $lock.ReleaseMutex() }
     $lock.Dispose()

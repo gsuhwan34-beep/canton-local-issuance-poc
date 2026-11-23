@@ -1,5 +1,11 @@
 module Issuance where
 
+import DA.Time (addRelTime, days)
+import Splice.Api.Token.HoldingV1 qualified as H
+import Splice.Api.Token.TransferInstructionV1 qualified as T
+import Splice.Api.Token.MetadataV1
+import Splice.Testing.Tokens.TestTokenV1 (Token(..), TokenRules(..))
+
 template IssuanceRequest
   with
     issuer : Party
@@ -26,3 +32,47 @@ template IssuedHolding
   where
     signatory issuer, approver
     ensure quantity > 0
+
+    -- Consuming the original approved lot makes conversion possible exactly once,
+    -- including for contracts created before the transfer feature was installed.
+    choice FirstTransfer : ()
+      with amount : Int
+      controller issuer
+      do
+        let instrumentId = H.InstrumentId with admin = issuer; id = reference
+        let holding = H.HoldingView with
+              owner = issuer; instrumentId; amount = intToDecimal quantity; lock = None; meta = emptyMetadata
+        token <- create Token with holding
+        account <- create TransferAccount with issuer; approver; reference; symbol; quantity
+        exercise account Send with sender = issuer; amount; inputs = [token]
+
+template TransferAccount
+  with
+    issuer : Party
+    approver : Party
+    reference : Text
+    symbol : Text
+    quantity : Int
+  where
+    signatory issuer, approver
+    ensure issuer /= approver && quantity > 0
+
+    nonconsuming choice Send : ()
+      with
+        sender : Party
+        amount : Int
+        inputs : [ContractId Token]
+      controller sender
+      do
+        assert (sender == issuer || sender == approver)
+        assert (amount > 0 && not (null inputs))
+        now <- getTime
+        factory <- create TokenRules with admin = issuer
+        let transfer = T.Transfer with
+              sender; receiver = if sender == issuer then approver else issuer
+              instrumentId = H.InstrumentId with admin = issuer; id = reference
+              amount = intToDecimal amount; requestedAt = now; executeBefore = addRelTime now (days 1)
+              inputHoldingCids = map toInterfaceContractId inputs; meta = emptyMetadata
+        _ <- exercise (toInterfaceContractId @T.TransferFactory factory) T.TransferFactory_Transfer with
+          expectedAdmin = issuer; transfer; extraArgs = ExtraArgs emptyChoiceContext emptyMetadata
+        archive factory

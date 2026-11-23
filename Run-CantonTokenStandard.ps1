@@ -1,4 +1,4 @@
-param([switch]$Prepare, [switch]$InstallOnly)
+param([switch]$Prepare, [switch]$InstallOnly, [switch]$BuildOnly)
 
 $ErrorActionPreference = 'Stop'
 $ref = '17c6a5957eb2f193d9f7fa8f5283bbac5e30d9a1'
@@ -52,5 +52,6 @@ if ($Prepare) {
 
 if (!(Test-Path -LiteralPath $bundle)) { throw 'Run .\Run-CantonTokenStandard.ps1 -Prepare with the local Canton platform running.' }
 $demoArgs = @((Join-Path $PSScriptRoot 'token-standard/demo.mjs'), $bundle)
+if ($BuildOnly) { return }
 if ($InstallOnly) { $demoArgs += '--install-only' }
 Invoke-Checked 'node.exe' $demoArgs

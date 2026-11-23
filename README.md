@@ -5,7 +5,7 @@ A Windows demo of private Canton. Run two participants on one laptop, issue and 
 Canton OSS로 Participant 두 개와 전용 Synchronizer를 띄운다. 아래 두 실습은 같은 로컬 네트워크를 사용한다.
 
 1. **[CIP-0056 발행과 이전](token-standard/README.md)** · 공식 Splice 테스트 토큰으로 125개를 만들고 다른 Participant에 50개를 이전한다. 표준 `Holding` 인터페이스로 두 Party의 보유량을 검증한다.
-2. **[기관 발행 업무](platform/README.md)** · 별도 기관의 발행 승인을 받아 원장에 기록하고, Temporal과 기관별 PQS에서 처리 결과를 확인한다.
+2. **[기관 발행·이전 앱](platform/README.md)** · 발행을 승인한 뒤 같은 종목의 일부 또는 전량을 상대 기관으로 보낸다. 상대방이 수락하면 양쪽의 보유 수량을 확인할 수 있다.
 
 ## 시작하기
 
@@ -24,7 +24,7 @@ Windows x64에 JDK 21, Node.js 22.18 이상, Git이 설치돼 있어야 한다. 
 .\Start-CantonPoc.ps1 -Status
 ```
 
-상태 검사에서 서로 다른 Participant ID, 같은 전용 Synchronizer ID, 기관별 읽기·쓰기 권한을 실제 Ledger API로 확인한다. Temporal 작업 큐, Keycloak, 업무 앱, 두 PQS의 원장·DB 연결, 두 Lens의 계약 조회도 확인한다. 업무 화면에는 별도의 발행 요청·승인 예제가 있다. 표준 토큰 이전은 위 콘솔 실습에서 실행한다.
+상태 검사에서 서로 다른 Participant ID, 같은 전용 Synchronizer ID, 기관별 읽기·쓰기 권한을 실제 Ledger API로 확인한다. Temporal 작업 큐, Keycloak, 업무 앱, 두 PQS의 원장·DB 연결, 두 Lens의 계약 조회도 확인한다. 표준 토큰 이전은 위 콘솔 실습과 업무 앱에서 모두 실행할 수 있다.
 
 **운용 범위**는 Windows 한 대의 지속형 개발망이다. 네 논리 노드가 같은 Canton 프로세스에서 동작하며 각자의 H2 파일을 쓴다. 한 PC에서 두 기관의 권한·계약·업무 앱을 시험하는 데 쓰는 구성이다. 실제 기관별 서버 운영에는 노드 분리, 운영용 저장소, 기관별 키·인증, 백업·복구와 장애 전환 시험이 필요하다. 실행 폴더는 고정해서 사용한다. 원장 파일은 `network/data`, 업무 DB와 계정은 `%LOCALAPPDATA%\CantonPrivatePoc`에 보관한다.
 

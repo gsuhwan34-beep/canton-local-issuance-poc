@@ -7,7 +7,7 @@ import { NativeConnection, Worker } from '@temporalio/worker';
 import { ledgerClient } from './ledger-api.mjs';
 import { database } from './database.mjs';
 import { issuanceActivities } from './issuance-activities.mjs';
-import { readContracts } from './projections.mjs';
+import { portfolio, transferCommand } from './transfers.mjs';
 
 const app = express();
 const origin = 'http://127.0.0.1:18090';
@@ -47,7 +47,7 @@ app.use((req, res, next) => {
 });
 app.use(express.static(fileURLToPath(new URL('./dist', import.meta.url))));
 app.get('/healthz', (_req, res) => res.json({ orchestration: 'temporal' }));
-app.use('/api', express.json({ limit: '8kb' }));
+app.use('/api', express.json({ limit: '256kb' }));
 app.use('/api', async (req, res, next) => {
   res.set('Cache-Control', 'no-store');
   if (req.method === 'POST' && req.get('origin') !== origin) return res.sendStatus(403);
@@ -66,8 +66,12 @@ app.use('/api', async (req, res, next) => {
 app.get('/api/contracts', async (req, res) => {
   const actor = req.actor;
   const db = projections.get(actor.projection);
-  const [pending, issued] = await Promise.all(['IssuanceRequest', 'IssuedHolding'].map(template => readContracts(db, template)));
-  res.json({ role: actor.role, party: actor.party, pending, issued });
+  res.json({ role: actor.role, party: actor.party, ...await portfolio(db, actor.party) });
+});
+
+app.post('/api/transfers', async (req, res) => {
+  const result = await transferCommand(req.body, req.actor, projections.get(req.actor.projection), writeLedger);
+  res.json(result);
 });
 
 async function submit(commandId, request) {
@@ -120,6 +124,7 @@ app.post('/api/issuance/:cid/approve', async (req, res) => {
 });
 
 app.use((error, req, res, next) => {
+  if (error.transferStatus) return res.status(error.transferStatus).json({ error: error.message });
   console.error(req.method, req.path, error instanceof Error ? error.message : 'Unexpected error');
   const reason = error.cause?.cause?.type;
   const conflict = error.status === 409 || reason === 'IssuanceConflict';
