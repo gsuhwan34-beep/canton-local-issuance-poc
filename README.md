@@ -1,5 +1,24 @@
 # Canton 로컬 모의 발행
 
+## 2개 Participant에서 DSRV Canton Lens 실행
+
+Windows x64에서 JDK 21, Node.js 22.18 이상, PowerShell, Git을 준비한다. 저장소 루트에서 아래 명령을 실행한다. 첫 실행은 Canton SDK와 고정된 버전의 DSRV Lens를 내려받고 공식 IOU 예제를 빌드한다. 이후에는 두 번째 명령으로 저장된 원장을 다시 띄운다.
+
+```powershell
+.\Start-CantonLens.ps1 -Prepare
+.\Start-CantonLens.ps1
+```
+
+- [발행기관 Lens](http://127.0.0.1:5173/#/contracts)는 자체 보유분 900과 증권사에 이전한 100의 계약을 조회한다.
+- [증권사 Lens](http://127.0.0.1:5174/#/contracts)는 수락한 100의 계약을 조회한다. 양쪽 화면에 표시된 100 계약의 ID가 같다.
+- Participant 2개와 Sequencer·Mediator는 각자 H2 파일에 기록을 보관한다. 노드 주소와 로컬 저장 설정은 [network](network)에 있고, 설치물·로그·원장 파일·인증 정보는 로컬에서 생성된다.
+
+이 구성은 노트북 안에서 쓰는 시연이다. 원격 시연 시 두 Lens 백엔드가 각각의 Participant API에 연결될 수 있어야 하며, 초대받은 관람자는 보호된 Lens 화면으로 접속한다. 운영자가 사용하는 Participant API와 인증 서버는 내부에 둔다.
+
+[Canton v3.7.3 공식 노드 구성](https://github.com/digital-asset/canton/tree/v3.7.3/community/app/src/pack/examples/01-simple-topology) · [공식 IOU 예제](https://github.com/digital-asset/canton/blob/v3.7.3/community/ledger/ledger-common-dars/src/main/daml/model/Iou.daml) · [DSRV Lens 배포 문서](https://github.com/dsrvlabs/canton-lens/blob/main/docs/deployment.md)
+
+## 처음 만든 단일 Participant 예제
+
 Windows 노트북 한 대에서 채권을 본뜬 `DEMO-BOND` 1,000개를 발행하고, 100개를 다른 사람에게 보내는 예제다. 실행이 끝나면 Alice의 계약에는 900개, Bob의 계약에는 100개가 남는다.
 
 ## 무엇을 가져왔고 무엇을 만들었나

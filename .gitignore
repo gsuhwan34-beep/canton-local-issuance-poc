@@ -3,3 +3,4 @@ tools/
 issuance/.daml/
 issuance/log/
 logs/
+.lens/
