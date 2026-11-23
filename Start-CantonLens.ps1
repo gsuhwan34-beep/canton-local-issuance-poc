@@ -7,7 +7,10 @@ $lens = Join-Path $PSScriptRoot '.lens/apps'
 $lensRepo = Split-Path $lens -Parent
 $dar = Join-Path $network 'model/.daml/dist/local-official-iou-1.0.0.dar'
 if ($Prepare) {
-    if (!(Test-Path (Join-Path $root 'tools/dpm.exe'))) { & (Join-Path $root 'setup.ps1') }
+    if (!(Test-Path (Join-Path $root 'tools/dpm.exe')) -or
+        !(Get-ChildItem (Join-Path $root '.dpm') -Recurse -Filter 'canton-open-source-3.7.3.jar' -ErrorAction SilentlyContinue | Select-Object -First 1)) {
+        & (Join-Path $root 'setup.ps1')
+    }
     if (!(Test-Path (Join-Path $lensRepo '.git'))) {
         git clone https://github.com/dsrvlabs/canton-lens.git $lensRepo
         if ($LASTEXITCODE) { throw 'Lens clone failed.' }

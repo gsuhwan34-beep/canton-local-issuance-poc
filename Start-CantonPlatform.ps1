@@ -6,11 +6,12 @@ $platform = Join-Path $PSScriptRoot 'platform'
 $runtime = Join-Path $env:LOCALAPPDATA 'CantonPrivatePoc/runtime'
 $keycloak = Join-Path $runtime 'keycloak-26.8.2'
 $pqsJar = Join-Path $runtime 'pqs.jar'
+$temporal = Join-Path $runtime 'temporal-1.10.1/temporal.exe'
 $env:JAVA_HOME = Split-Path (Split-Path (Get-Command java.exe).Source)
 
 function Get-VerifiedArchive($url, $path, $hash) {
     if (!(Test-Path -LiteralPath $path)) {
-        Invoke-WebRequest -Uri $url -OutFile $path
+        Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $path
     }
     if ((Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash -ne $hash) {
         throw "Checksum mismatch: $path"
@@ -58,12 +59,22 @@ if ($Prepare) {
         Get-VerifiedArchive "https://europe-docker.pkg.dev/v2/da-images/public/docker/participant-query-store/blobs/sha256:${layerHash}" $archive $layerHash
         Invoke-Local $runtime 'tar.exe' @('-xzf', $archive, 'pqs.jar')
     }
+    if (!(Test-Path -LiteralPath $temporal)) {
+        $archive = Join-Path $runtime 'temporal-1.10.1-win-x64.zip'
+        Get-VerifiedArchive 'https://github.com/temporalio/cli/releases/download/v1.10.1/temporal_cli_1.10.1_windows_amd64.zip' $archive '5069cdb76569914305ed7c90e1c8406cd27bcb6c2a822fce201a488c34ab074f'
+        Expand-Archive -LiteralPath $archive -DestinationPath (Split-Path $temporal -Parent) -Force
+    }
     Copy-Item (Join-Path $platform 'postgres-runtime/package*.json') -Destination $runtime
     Copy-Item (Join-Path $platform 'postgres.mjs') -Destination $runtime
     if (!(Test-Port 15432)) {
         Invoke-Local $runtime 'npm.cmd' @('ci','--no-audit','--no-fund')
     }
-    Invoke-Local $platform 'npm.cmd' @('ci','--no-audit','--no-fund')
+    if (Test-Port 18090) {
+        # npm ci replaces loaded native Temporal modules, which Windows locks.
+        Invoke-Local $platform 'npm.cmd' @('ls','--depth=0')
+    } else {
+        Invoke-Local $platform 'npm.cmd' @('ci','--no-audit','--no-fund')
+    }
     Invoke-Local $platform 'npm.cmd' @('run','build')
     $env:DPM_HOME = Join-Path $PSScriptRoot '.dpm'
     $env:DPM_REGISTRY = 'europe-docker.pkg.dev/da-images/public'
@@ -72,7 +83,7 @@ if ($Prepare) {
     & (Join-Path $PSScriptRoot 'Start-CantonLens.ps1')
 }
 
-if (!(Test-Path $pqsJar) -or !(Test-Path (Join-Path $platform 'dist/index.html'))) {
+if (!(Test-Path $pqsJar) -or !(Test-Path -LiteralPath $temporal) -or !(Test-Path (Join-Path $platform 'dist/index.html'))) {
     throw 'Run .\Start-CantonPlatform.ps1 -Prepare first.'
 }
 Invoke-Local $platform 'node.exe' @('identity.mjs')
@@ -124,7 +135,11 @@ try {
 Wait-Http 'http://127.0.0.1:18084/realms/canton-poc/.well-known/openid-configuration'
 Wait-Http 'http://127.0.0.1:18081/readyz'
 Wait-Http 'http://127.0.0.1:18082/readyz'
+Start-LocalService 7233 $temporal @('server','start-dev','--ip','127.0.0.1','--ui-ip','127.0.0.1','--ui-port','8233',
+    '--db-filename','issuance-workflows.db') $runtime 'temporal'
+Wait-Http 'http://127.0.0.1:8233/'
 Start-LocalService 18090 'node.exe' 'server.mjs' $platform 'platform'
-Wait-Http 'http://127.0.0.1:18090/'
+Wait-Http 'http://127.0.0.1:18090/healthz'
 Write-Output 'Platform http://127.0.0.1:18090/'
+Write-Output 'Temporal UI http://127.0.0.1:8233/'
 Write-Output "Local demo accounts: $runtime\platform-demo-accounts.json"

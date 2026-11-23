@@ -1,0 +1,14 @@
+{
+  "name": "canton-poc-noves-tools",
+  "private": true,
+  "scripts": {
+    "configure": "canton-mcp init",
+    "tools": "node client.mjs tools",
+    "balance": "node client.mjs balance",
+    "start": "canton-mcp"
+  },
+  "dependencies": {
+    "@noves/canton-mcp": "0.2.3",
+    "@modelcontextprotocol/sdk": "1.32.2"
+  }
+}

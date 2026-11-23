@@ -40,7 +40,8 @@ function App() {
     setBusy(true); setError(''); setInfo('');
     try {
       const result = await api(path, payload);
-      setInfo('원장 처리 완료 · ' + result.updateId);
+      const state = result.projectionStatus === 'confirmed' ? '기관별 조회 DB 반영 확인' : '기관별 조회 DB 반영 대기';
+      setInfo('원장 확정 · ' + state + ' · ' + result.workflowId);
       setTarget(null);
       if (path === 'issuance') setReference(generateCommandId());
       await update();
@@ -54,7 +55,10 @@ function App() {
         <h1 className="display-5 fw-semibold">증권 발행 실증</h1>
         {data && <p className="text-secondary mb-0">{data.role === 'issuer' ? '발행기관 · IssuingDesk' : '승인기관 · BrokerB'}</p>}
       </div>
-      <button className="btn btn-outline-secondary" onClick={() => auth.logout({ redirectUri: location.origin })}>로그아웃</button>
+      <div className="d-flex gap-2">
+        <a className="btn btn-outline-primary" href="http://127.0.0.1:8233/" target="_blank" rel="noreferrer">워크플로 이력</a>
+        <button className="btn btn-outline-secondary" onClick={() => auth.logout({ redirectUri: location.origin })}>로그아웃</button>
+      </div>
     </header>
     {error && <p role="alert" className="alert alert-danger mt-3">{error}</p>}
     {info && <p role="status" className="alert alert-success mt-3 text-break">{info}</p>}

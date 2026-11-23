@@ -2,7 +2,7 @@
 <html lang="ko"><meta charset="utf-8"><title>Canton 사설망 업무 플랫폼 구성도</title>
 <style>
   *{box-sizing:border-box}body{margin:0;background:#eef4fb;color:#122f56;font:17px 'Malgun Gothic',sans-serif}
-  main{position:relative;margin:0 auto;width:1160px;height:790px;background:#fff}
+  main{position:relative;margin:0 auto;width:1160px;height:890px;background:#fff}
   header{position:absolute;left:42px;top:29px}header h1{margin:0 0 7px;font-size:32px;letter-spacing:-.035em}
   header p{margin:0;color:#4c6280}
   .area{position:absolute;border:1px solid #9ac2f1;background:#eff7ff;border-radius:12px;color:#174d86;padding:13px 16px;font-weight:bold}
@@ -14,36 +14,39 @@
   svg{position:absolute;inset:0;pointer-events:none}
 </style>
 <main>
- <header><h1>Canton 사설망 업무 플랫폼 구성</h1><p>발행 요청과 승인 · 기관별 원장 조회</p></header>
- <div class="area" style="left:35px;top:380px;width:1090px;height:335px">Canton 사설 네트워크</div>
- <div class="area" style="left:65px;top:565px;width:1030px;height:125px;background:#dceeff">전용 Synchronizer</div>
- <svg width="1160" height="790" aria-hidden="true">
+ <header><h1>Canton 사설망 업무 플랫폼 구성</h1><p>발행 요청과 승인 · Temporal 처리 이력 · 기관별 원장 조회</p></header>
+ <div class="area" style="left:35px;top:490px;width:1090px;height:335px">Canton 사설 네트워크</div>
+ <div class="area" style="left:65px;top:675px;width:1030px;height:125px;background:#dceeff">전용 Synchronizer</div>
+ <svg width="1160" height="890" aria-hidden="true">
   <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 1 10 5 0 9Z" fill="#3074b7"/></marker>
   <marker id="read" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 1 10 5 0 9Z" fill="#318886"/></marker></defs>
   <g fill="none" stroke="#3074b7" stroke-width="2" marker-end="url(#arrow)">
    <path d="M430 161H323"/><path d="M570 196V244"/>
-   <path d="M690 277H820"/><path d="M498 317V353H317V435"/>
-   <path d="M641 317V353H782V435"/>
-   <path d="M325 530V560H450V614"/><path d="M795 530V560H507V614"/>
-   <path d="M580 641H675" marker-start="url(#arrow)"/>
+   <path d="M690 277H820"/><path d="M567 317V367"/>
+   <path d="M498 442V470H317V545"/><path d="M641 442V470H782V545"/>
+   <path d="M325 640V670H450V724"/><path d="M795 640V670H507V724"/>
+   <path d="M580 751H675" marker-start="url(#arrow)"/>
   </g>
   <g fill="none" stroke="#318886" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#read)">
-   <path d="M242 436V317"/><path d="M876 436V348H308V300"/>
+   <path d="M242 545V317"/><path d="M876 545V351H308V300"/>
    <path d="M307 264H444"/>
+   <path d="M444 404H367V302H307"/>
   </g>
  </svg>
  <div class="box app" style="left:430px;top:125px;width:280px;height:71px"><b>업무 화면</b><span>발행 요청 · 승인 · 처리 결과</span></div>
  <div class="box app" style="left:125px;top:125px;width:198px;height:71px"><b>Keycloak</b><span>발행·승인 계정 로그인</span></div>
- <div class="box app" style="left:444px;top:244px;width:246px;height:73px"><b>업무 백엔드</b><span>역할 검증 · 요청/승인 명령 제출</span></div>
+ <div class="box app" style="left:444px;top:244px;width:246px;height:73px"><b>업무 백엔드</b><span>역할 검증 · 발행/승인 작업 등록</span></div>
+ <div class="box app" style="left:444px;top:367px;width:246px;height:75px"><b>Temporal 워크플로·워커</b><span>제출 · 재시도 · DB 반영 확인</span></div>
  <div class="box storage" style="left:77px;top:242px;width:230px;height:75px"><b>PQS → PostgreSQL</b><span>발행기관 DB · 승인기관 DB</span></div>
  <div class="box storage" style="left:820px;top:242px;width:263px;height:75px"><b>업무 DB · PostgreSQL</b><span>로그인 계정 ↔ Party · 노드 매핑</span></div>
  <span class="label" style="left:578px;top:207px">요청 · 결과</span>
  <span class="label" style="left:332px;top:247px">SQL 조회</span>
- <span class="label" style="left:329px;top:362px">Ledger API · 발행</span>
- <span class="label" style="left:793px;top:362px">Ledger API · 승인</span>
- <div class="box" style="left:160px;top:435px;width:330px;height:95px"><b>Participant 1 · 발행기관</b><span>IssuingDesk · Daml 검증 · H2 저장소</span><span>DSRV Lens <strong>5173</strong></span></div>
- <div class="box" style="left:630px;top:435px;width:330px;height:95px"><b>Participant 2 · 승인기관</b><span>BrokerB · Daml 검증 · H2 저장소</span><span>DSRV Lens <strong>5174</strong></span></div>
- <div class="box" style="left:338px;top:614px;width:242px;height:54px"><b>Sequencer</b><span>메시지 순서 지정 · 전달</span></div>
- <div class="box" style="left:675px;top:614px;width:250px;height:54px"><b>Mediator</b><span>확인 응답 집계 · 판정</span></div>
+ <span class="label" style="left:576px;top:325px">워크플로 실행</span>
+ <span class="label" style="left:329px;top:488px">Ledger API · 발행</span>
+ <span class="label" style="left:793px;top:488px">Ledger API · 승인</span>
+ <div class="box" style="left:160px;top:545px;width:330px;height:95px"><b>Participant 1 · 발행기관</b><span>IssuingDesk · Daml 검증 · H2 저장소</span><span>DSRV Lens <strong>5173</strong></span></div>
+ <div class="box" style="left:630px;top:545px;width:330px;height:95px"><b>Participant 2 · 승인기관</b><span>BrokerB · Daml 검증 · H2 저장소</span><span>DSRV Lens <strong>5174</strong></span></div>
+ <div class="box" style="left:338px;top:724px;width:242px;height:54px"><b>Sequencer</b><span>메시지 순서 지정 · 전달</span></div>
+ <div class="box" style="left:675px;top:724px;width:250px;height:54px"><b>Mediator</b><span>확인 응답 집계 · 판정</span></div>
  <div class="legend"><b>실선</b> 인증·명령·처리 &nbsp;&nbsp; <b>점선</b> 원장 이벤트 적재·업무 조회 &nbsp;&nbsp; <b>업무 규칙</b> Daml의 발행 요청과 승인</div>
 </main></html>

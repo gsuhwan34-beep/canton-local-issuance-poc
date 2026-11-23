@@ -1,0 +1,6 @@
+local:
+  user-workflow:
+    workflow-name: canton-registry-check
+  workflow-artifacts:
+    workflow-path: ./main.ts
+    config-path: ./config.json

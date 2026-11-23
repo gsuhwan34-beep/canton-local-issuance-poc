@@ -4,3 +4,6 @@ issuance/.daml/
 issuance/log/
 logs/
 .lens/
+.token-standard/
+.env
+.env.*

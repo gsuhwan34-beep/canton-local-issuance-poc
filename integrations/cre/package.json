@@ -1,0 +1,15 @@
+{
+  "name": "canton-registry-cre",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@chainlink/cre-sdk": "1.23.0"
+  },
+  "devDependencies": {
+    "bun": "1.4.5"
+  },
+  "scripts": {
+    "build": "cre-compile main.ts dist/registry.wasm",
+    "test": "bun test"
+  }
+}
