@@ -1,0 +1,6 @@
+body { background: #f3f6f8; color: #173149; }
+main.container { max-width: 1040px; }
+.panel { background: white; margin-top: 1.25rem; border: 1px solid #d6dfe6; border-radius: .65rem; padding: 1.35rem; }
+.panel h2 { margin-bottom: 1rem; }
+.form-control { margin-top: .25rem; }
+.table code { color: #314d68; }

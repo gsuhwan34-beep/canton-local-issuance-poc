@@ -1,5 +1,9 @@
 # Canton 로컬 모의 발행
 
+## 업무 플랫폼 실증
+
+기존 사설망에 Keycloak 로그인, 발행 요청·승인 업무 화면, 기관별 PQS·PostgreSQL 조회를 연결했다. [구성도, 공식 코드 출처 및 재현 방법](platform/README.md)
+
 ## 2개 Participant에서 DSRV Canton Lens 실행
 
 Windows x64에서 JDK 21, Node.js 22.18 이상, PowerShell, Git을 준비한다. 저장소 루트에서 아래 명령을 실행한다. 첫 실행은 Canton SDK와 고정된 버전의 DSRV Lens를 내려받고 공식 IOU 예제를 빌드한다. 이후에는 두 번째 명령으로 저장된 원장을 다시 띄운다.

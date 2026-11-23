@@ -1,0 +1,28 @@
+module Issuance where
+
+template IssuanceRequest
+  with
+    issuer : Party
+    approver : Party
+    reference : Text
+    symbol : Text
+    quantity : Int
+  where
+    signatory issuer
+    observer approver
+    ensure issuer /= approver && quantity > 0 && symbol /= ""
+
+    choice Approve : ContractId IssuedHolding
+      controller approver
+      do create IssuedHolding with issuer; approver; reference; symbol; quantity
+
+template IssuedHolding
+  with
+    issuer : Party
+    approver : Party
+    reference : Text
+    symbol : Text
+    quantity : Int
+  where
+    signatory issuer, approver
+    ensure quantity > 0

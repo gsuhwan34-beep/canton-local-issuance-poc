@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "embedded-postgres": "^18.7.0-beta.19"
+  }
+}

@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 const issuer = 'http://127.0.0.1:17610';
 const audience = 'http://127.0.0.1:7575';
-const clients = ['participant_admin','lens-viewer'].map(client_id => {
+const clients = ['participant_admin','lens-viewer','platform-writer'].map(client_id => {
   const path = client_id+'.secret';
   if (!fs.existsSync(path)) fs.writeFileSync(path, crypto.randomBytes(48).toString('hex'));
   return {client_id, client_secret:fs.readFileSync(path,'utf8'),grant_types:['client_credentials'],response_types:[],redirect_uris:[],token_endpoint_auth_method:'client_secret_basic'};
