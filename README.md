@@ -28,7 +28,7 @@ Windows x64에 JDK 21, Node.js 22.18 이상, Git이 설치돼 있어야 한다. 
 
 **운용 범위**는 Windows 한 대의 지속형 개발망이다. 네 논리 노드가 같은 Canton 프로세스에서 동작하며 각자의 H2 파일을 쓴다. 한 PC에서 두 기관의 권한·계약·업무 앱을 시험하는 데 쓰는 구성이다. 실제 기관별 서버 운영에는 노드 분리, 운영용 저장소, 기관별 키·인증, 백업·복구와 장애 전환 시험이 필요하다. 실행 폴더는 고정해서 사용한다. 원장 파일은 `network/data`, 업무 DB와 계정은 `%LOCALAPPDATA%\CantonPrivatePoc`에 보관한다.
 
-- **업무 화면과 실행 이력** · [발행·승인 앱](http://127.0.0.1:18090/) · [Temporal](http://127.0.0.1:8233/) · [구성도와 계정 안내](platform/README.md)
+- **업무 화면과 실행 이력** · [발행·이전·동시결제 앱](http://127.0.0.1:18090/) · [Temporal](http://127.0.0.1:8233/) · [전체 구성도](platform/architecture.png) · [업무 흐름과 계정 안내](platform/README.md)
 - **기관별 원장 보기** · [발행기관 Lens](http://127.0.0.1:5173/) · [상대 기관 Lens](http://127.0.0.1:5174/)
 - **외부 제품** · [DA Registry DevNet·Chainlink CRE·Noves 연결 확인](integrations/README.md)
 - 예제 서비스는 로컬 주소에서 실행한다. 로그인 정보, 원장, 빌드한 DAR와 서비스 실행 파일은 설치 환경에 생성된다.

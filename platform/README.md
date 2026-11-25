@@ -4,6 +4,8 @@
 
 ![Canton 사설망 업무 플랫폼 구성도](architecture.png)
 
+발행 요청·승인은 Temporal 워커가 제출한다. 무상 이전·모의 대금 준비·동시결제는 Express가 해당 기관의 Ledger API로 직접 제출한다. 기관별 조회는 PQS와 DSRV Lens에서 확인한다.
+
 ## 거래가 처리되는 순서
 
 1. **발행 요청** · 발행기관 계정으로 로그인하고 수량을 입력한다. 백엔드가 계정과 Party의 연결을 확인하고 Temporal에 작업을 등록한다. 워커가 발행기관 Participant에 `IssuanceRequest` 생성을 제출한다.
