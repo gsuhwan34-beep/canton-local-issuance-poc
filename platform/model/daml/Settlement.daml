@@ -1,0 +1,143 @@
+module Settlement where
+
+import DA.Time (addRelTime, days)
+import Splice.Api.Token.AllocationV1 qualified as A
+import Splice.Api.Token.AllocationInstructionV1 qualified as F
+import Splice.Api.Token.HoldingV1 qualified as H
+import Splice.Api.Token.MetadataV1
+import Splice.Testing.Tokens.TestTokenV1 (Token(..), TokenAllocation(..), TokenRules(..))
+
+cashInstrument : Party -> H.InstrumentId
+cashInstrument admin = H.InstrumentId with admin; id = "DEMO-CASH"
+
+mintDemoToken : Party -> H.InstrumentId -> Int -> Update (ContractId Token)
+mintDemoToken owner instrumentId quantity = do
+  let holding = H.HoldingView with
+        owner; instrumentId; amount = intToDecimal quantity; lock = None; meta = emptyMetadata
+  create Token with holding
+
+-- Both parties consent to funding the buyer with a separate simulation asset.
+template CashFunding
+  with
+    issuer : Party
+    buyer : Party
+    quantity : Int
+  where
+    signatory issuer
+    observer buyer
+    ensure issuer /= buyer && quantity > 0
+
+    choice AcceptFunding : ContractId Token
+      controller buyer
+      do mintDemoToken buyer (cashInstrument issuer) quantity
+
+data Sale = Sale with
+    seller : Party
+    buyer : Party
+    saleId : Text
+    reference : Text
+    symbol : Text
+    quantity : Int
+    payment : Int
+  deriving (Eq, Show)
+
+validSale : Sale -> Bool
+validSale sale =
+  sale.seller /= sale.buyer && sale.saleId /= "" && sale.reference /= "DEMO-CASH" &&
+  sale.quantity > 0 && sale.payment > 0
+
+securityLeg : Sale -> A.SettlementInfo -> A.AllocationSpecification
+securityLeg sale settlement = A.AllocationSpecification with
+  settlement; transferLegId = "security"
+  transferLeg = A.TransferLeg with
+    sender = sale.seller; receiver = sale.buyer; amount = intToDecimal sale.quantity
+    instrumentId = H.InstrumentId with admin = sale.seller; id = sale.reference
+    meta = emptyMetadata
+
+cashLeg : Sale -> A.SettlementInfo -> A.AllocationSpecification
+cashLeg sale settlement = A.AllocationSpecification with
+  settlement; transferLegId = "payment"
+  transferLeg = A.TransferLeg with
+    sender = sale.buyer; receiver = sale.seller; amount = intToDecimal sale.payment
+    instrumentId = cashInstrument sale.seller
+    meta = emptyMetadata
+
+args : ExtraArgs
+args = ExtraArgs emptyChoiceContext emptyMetadata
+
+allocate : A.AllocationSpecification -> [ContractId Token] -> Update (ContractId A.Allocation)
+allocate allocation inputs = do
+  now <- getTime
+  let expectedAdmin = allocation.transferLeg.instrumentId.admin
+  factory <- create TokenRules with admin = expectedAdmin
+  result <- exercise (toInterfaceContractId @F.AllocationFactory factory) F.AllocationFactory_Allocate with
+    expectedAdmin; allocation; requestedAt = now
+    inputHoldingCids = map toInterfaceContractId inputs; extraArgs = args
+  archive factory
+  case result.output of
+    F.AllocationInstructionResult_Completed cid -> pure cid
+    _ -> fail "Expected a funded allocation"
+
+proposeSale : Sale -> [ContractId Token] -> Update (ContractId DvPOffer)
+proposeSale sale inputs = do
+  assert (validSale sale)
+  now <- getTime
+  let settlement = A.SettlementInfo with
+        executor = sale.buyer; settlementRef = A.Reference sale.saleId None
+        requestedAt = now; allocateBefore = addRelTime now (days 1)
+        settleBefore = addRelTime now (days 2); meta = emptyMetadata
+  security <- allocate (securityLeg sale settlement) inputs
+  create DvPOffer with sale; settlement; security
+
+checkSecurity : Sale -> A.SettlementInfo -> ContractId A.Allocation -> Update ()
+checkSecurity sale settlement cid = do
+  -- Accept only the allocation implementation actually backed by our test token.
+  -- An arbitrary implementation can return the same view without moving the asset.
+  allocated <- fetch (coerceContractId cid : ContractId TokenAllocation)
+  assert (allocated.allocation == securityLeg sale settlement)
+
+template DvPOffer
+  with
+    sale : Sale
+    settlement : A.SettlementInfo
+    security : ContractId A.Allocation
+  where
+    signatory sale.seller
+    observer sale.buyer
+    ensure validSale sale && settlement.executor == sale.buyer &&
+      settlement.settlementRef == A.Reference sale.saleId None
+
+    -- Both exercises commit in the same ledger transaction. Any rejected
+    -- allocation or transfer rolls the whole choice back, including its receipt.
+    choice Settle : ContractId DvPReceipt
+      with cashInputs : [ContractId Token]
+      controller sale.buyer
+      do
+        checkSecurity sale settlement security
+        payment <- allocate (cashLeg sale settlement) cashInputs
+        _ <- exercise security A.Allocation_ExecuteTransfer with extraArgs = args
+        _ <- exercise payment A.Allocation_ExecuteTransfer with extraArgs = args
+        settledAt <- getTime
+        create DvPReceipt with sale; settledAt
+
+    choice WithdrawSale : ()
+      controller sale.seller
+      do
+        checkSecurity sale settlement security
+        _ <- exercise security A.Allocation_Withdraw with extraArgs = args
+        pure ()
+
+    choice RejectSale : ()
+      controller sale.buyer
+      do
+        checkSecurity sale settlement security
+        _ <- exercise security A.Allocation_Cancel with extraArgs = args
+        pure ()
+
+template DvPReceipt
+  with
+    sale : Sale
+    settledAt : Time
+  where
+    signatory sale.seller, sale.buyer
+    ensure validSale sale

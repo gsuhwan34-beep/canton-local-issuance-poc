@@ -8,6 +8,7 @@ import { ledgerClient } from './ledger-api.mjs';
 import { database } from './database.mjs';
 import { issuanceActivities } from './issuance-activities.mjs';
 import { portfolio, transferCommand } from './transfers.mjs';
+import { settlementCommand } from './settlement.mjs';
 
 const app = express();
 const origin = 'http://127.0.0.1:18090';
@@ -72,6 +73,10 @@ app.get('/api/contracts', async (req, res) => {
 app.post('/api/transfers', async (req, res) => {
   const result = await transferCommand(req.body, req.actor, projections.get(req.actor.projection), writeLedger);
   res.json(result);
+});
+
+app.post('/api/dvp', async (req, res) => {
+  res.json(await settlementCommand(req.body, req.actor, projections.get(req.actor.projection), writeLedger, workflow));
 });
 
 async function submit(commandId, request) {

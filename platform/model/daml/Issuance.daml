@@ -5,6 +5,7 @@ import Splice.Api.Token.HoldingV1 qualified as H
 import Splice.Api.Token.TransferInstructionV1 qualified as T
 import Splice.Api.Token.MetadataV1
 import Splice.Testing.Tokens.TestTokenV1 (Token(..), TokenRules(..))
+import Settlement (DvPOffer, Sale(..), mintDemoToken, proposeSale)
 
 template IssuanceRequest
   with
@@ -46,6 +47,17 @@ template IssuedHolding
         account <- create TransferAccount with issuer; approver; reference; symbol; quantity
         exercise account Send with sender = issuer; amount; inputs = [token]
 
+    choice FirstSale : ContractId DvPOffer
+      with
+        saleId : Text
+        amount : Int
+        payment : Int
+      controller issuer
+      do
+        token <- mintDemoToken issuer (H.InstrumentId issuer reference) quantity
+        account <- create TransferAccount with issuer; approver; reference; symbol; quantity
+        exercise account OfferSale with saleId; amount; payment; inputs = [token]
+
 template TransferAccount
   with
     issuer : Party
@@ -56,6 +68,15 @@ template TransferAccount
   where
     signatory issuer, approver
     ensure issuer /= approver && quantity > 0
+
+    nonconsuming choice OfferSale : ContractId DvPOffer
+      with
+        saleId : Text
+        amount : Int
+        payment : Int
+        inputs : [ContractId Token]
+      controller issuer
+      do proposeSale (Sale issuer approver saleId reference symbol amount payment) inputs
 
     nonconsuming choice Send : ()
       with

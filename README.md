@@ -5,7 +5,7 @@ A Windows demo of private Canton. Run two participants on one laptop, issue and 
 Canton OSS로 Participant 두 개와 전용 Synchronizer를 띄운다. 아래 두 실습은 같은 로컬 네트워크를 사용한다.
 
 1. **[CIP-0056 발행과 이전](token-standard/README.md)** · 공식 Splice 테스트 토큰으로 125개를 만들고 다른 Participant에 50개를 이전한다. 표준 `Holding` 인터페이스로 두 Party의 보유량을 검증한다.
-2. **[기관 발행·이전 앱](platform/README.md)** · 발행을 승인한 뒤 같은 종목의 일부 또는 전량을 상대 기관으로 보낸다. 상대방이 수락하면 양쪽의 보유 수량을 확인할 수 있다.
+2. **[기관 발행·이전·결제 앱](platform/README.md)** · 승인된 종목을 상대 기관에 보내거나, 같은 사설 원장 위에서 증권과 모의 대금을 한 거래로 교환한다. 두 기관의 잔액과 Lens에서 처리 결과를 확인할 수 있다.
 
 ## 시작하기
 

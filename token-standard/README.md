@@ -18,6 +18,6 @@
 2. 공식 `TransferFactory_Transfer`로 50개 이전을 제안한다. 송신 측 명령이 끝나더라도 수신 Participant의 조회 반영은 늦을 수 있으므로, 해당 제안이 수신 측의 활성 계약으로 조회된 뒤 `TransferInstruction_Accept`를 실행한다.
 3. 표준 `Holding`을 다시 조회해 발행기관 소유 75개와 상대 기관 소유 50개를 확인한다. 콘솔에 종목 ID, 각 보유량, 수신 계약 ID를 출력한다.
 
-이 실습의 Registry는 Splice의 테스트 패키지다. 스크립트가 로컬에서 발행 권한을 행사하고 TransferFactory 계약 ID를 사용한다. 별도 Registry HTTP 서비스와 범용 지갑 검색은 후속 연동 범위다. Temporal 업무 화면의 `IssuedHolding`은 별도 모의 발행 승인 사례로 [플랫폼 문서](../platform/README.md)에서 설명한다.
+이 실습의 Registry는 Splice의 테스트 패키지다. 스크립트가 로컬에서 발행 권한을 행사하고 TransferFactory 계약 ID를 사용한다. 별도 Registry HTTP 서비스와 범용 지갑 검색은 후속 연동 범위다. [업무 플랫폼](../platform/README.md)에서도 같은 Splice 테스트 토큰을 사용한다. 이미 승인한 종목을 처음 이전하거나 매도할 때 표준 토큰으로 전환하며, 동시결제에는 표준 Allocation 인터페이스를 호출한다.
 
 **실행 확인 · 2026-11-23.** Windows에서 Splice 인터페이스와 테스트 토큰 DAR를 Canton SDK 3.7.3으로 빌드했다. 두 Participant에 배포한 뒤 표준 인터페이스로 발행 125개, 이전 50개, 최종 보유량 75개와 50개를 확인했다.

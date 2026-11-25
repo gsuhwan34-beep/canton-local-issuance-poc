@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import Keycloak from 'keycloak-js';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Modal from './upstream/Modal';
+import Settlement, { chooseInputs } from './Settlement';
 import { generateCommandId } from './upstream/commandId';
 import './style.css';
 
@@ -44,16 +45,22 @@ function App() {
     try {
       const result = await api(path, payload);
       const state = result.projectionStatus === 'confirmed' ? '기관별 조회 DB 반영 확인' : '기관별 조회 DB 반영 대기';
-      setInfo(path === 'transfers' ? '이전 작업이 원장에 기록됐습니다.' : '원장 확정 · ' + state + ' · ' + result.workflowId);
+      if (path === 'dvp') {
+        setInfo(payload.operation === 'settle' ? '증권과 대금이 한 거래에서 결제됐습니다.' : '결제 준비 작업이 원장에 기록됐습니다.');
+      } else {
+        setInfo(path === 'transfers' ? '이전 작업이 원장에 기록됐습니다.' : '원장 확정 · ' + state + ' · ' + result.workflowId);
+      }
       setUpdateId(result.updateId);
       setTarget(null);
       setTransfer(null);
       if (path === 'issuance') setReference(generateCommandId());
       await update();
+      return 'confirmed';
     } catch (e) {
       setError(e.message);
       if (path === 'transfers' && e.status >= 400 && e.status < 500) setTransfer(null);
       await update();
+      return e.status >= 400 && e.status < 500 ? 'rejected' : 'unknown';
     }
     finally { setBusy(false); }
   }
@@ -67,14 +74,7 @@ function App() {
     if (transfer.submission) return submit('transfers', transfer.submission);
     const { row, operation, requestId } = transfer;
     const amount = Number(amountText);
-    const inputs = [];
-    if (operation === 'send' && !row.first) {
-      let total = 0;
-      for (const input of [...row.inputs].sort((a, b) => b.amount - a.amount)) {
-        inputs.push(input.id); total += input.amount;
-        if (total >= amount) break;
-      }
-    }
+    const inputs = operation === 'send' ? chooseInputs(row.inputs, amount) : [];
     const submission = { id: row.contract_id, operation, requestId, ...(operation === 'send' && { amount, inputs }) };
     setTransfer({ ...transfer, submission });
     submit('transfers', submission);
@@ -86,7 +86,7 @@ function App() {
   return <main className="container py-5">
     <header className="d-flex flex-wrap justify-content-between align-items-start gap-3 pb-4 border-bottom">
       <div><div className="text-uppercase text-secondary small">Canton 사설망</div>
-        <h1 className="display-5 fw-semibold">증권 발행·이전 실증</h1>
+        <h1 className="display-5 fw-semibold">증권 발행·이전·결제 실증</h1>
         {data && <p className="text-secondary mb-0">{data.role === 'issuer' ? '발행기관 · IssuingDesk' : '승인기관 · BrokerB'}</p>}
       </div>
       <div className="d-flex gap-2">
@@ -138,6 +138,7 @@ function App() {
               <button key={operation} disabled={busy} className="btn btn-outline-primary btn-sm" onClick={() => openTransfer(row, operation)}>{actions[operation]}</button>)}</td>
           </tr>)}</tbody></table></div>}
     </section>}
+    {data?.dvp && <Settlement data={data} busy={busy} error={error} submit={submit} />}
     <Modal show={!!transfer} title={actions[transfer?.operation]} onClose={() => !busy && setTransfer(null)} onConfirm={confirmTransfer}
       confirmButtonLabel={actions[transfer?.operation] + ' 확정'} confirmButtonDisabled={busy || (transfer?.operation === 'send' && invalidAmount)}>
       {transfer?.operation === 'send' ? <>
